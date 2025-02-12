@@ -26,6 +26,7 @@ edge-imdb-extension
 ## Installation
 
 1. Download or clone the repository.
+2. Open background.js and add your omdbapi.com api key (free for low usage).
 2. Open Edge and navigate to `edge://extensions/`.
 3. Enable "Developer mode" at the top right corner.
 4. Click on "Load unpacked" and select the `edge-imdb-extension` directory.
