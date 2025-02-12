@@ -36,6 +36,8 @@ edge-imdb-extension
 1. Click on the extension icon in the toolbar.
 2. Enter the name of the movie or show you want to search for.
 3. View the fetched information displayed in the popup.
+4. Click on the `Vidsrc` button to be redirected to vidsrc so you can watch!
+5. While watching an episode on vidsrc, you can go to the next episode by clicking the `Next` button.
 
 ## Contributing
 
