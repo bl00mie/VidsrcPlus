@@ -4,15 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="tabs.css">
     <title>IMDb Query</title>
 </head>
 <body>
-    <div id="popup-container">
-        <!-- <h1>IMDb Search</h1> -->
-        <input type="text" id="query" placeholder="Enter movie or show title">
-        <button id="search-button">Search</button>
-        <div id="results"></div>
-    </div>
+        <div id="popup-container">
+            <div class="tabs">
+                <button class="tab active" id="tab-main">Main</button>
+                <button class="tab" id="tab-domains">Domains</button>
+            </div>
+            <div class="tab-content active" id="main-content">
+                <input type="text" id="query" placeholder="Enter movie or show title">
+                <button id="search-button">Search</button>
+                <div id="results"></div>
+            </div>
+            <div class="tab-content" id="domains-content">
+                <div id="domains-list"></div>
+                <div id="default-domain-label"></div>
+            </div>
+        </div>
     <script src="popup.js"></script>
 </body>
 </html>

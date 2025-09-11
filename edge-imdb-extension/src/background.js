@@ -1,4 +1,4 @@
-const apiKey = 'add your api key';
+const apiKey = 'caac8478';
 const baseURL = 'https://www.omdbapi.com/';
 function searchIMDb(query, sendResponse) {
     //console.log(`fetching imdb data for ${query}`);

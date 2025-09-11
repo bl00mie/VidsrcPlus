@@ -1,0 +1,58 @@
+/* Tabs UI for popup */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  background: #eee;
+  border: none;
+  outline: none;
+  font-weight: bold;
+  color: #333;
+  border-radius: 4px 4px 0 0;
+  margin-right: 2px;
+}
+.tab.active {
+  background: #fff;
+  border-bottom: 2px solid #0078d4;
+  color: #0078d4;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+#domains-list {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+.domain-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+.domain-set-default {
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.domain-set-default.active {
+  background: #005a9e;
+}
+#default-domain-label {
+  margin-top: 10px;
+  font-weight: bold;
+  color: #0078d4;
+}
