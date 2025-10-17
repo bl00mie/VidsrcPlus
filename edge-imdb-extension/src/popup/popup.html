@@ -14,11 +14,16 @@
                 <button class="tab" id="tab-domains">Domains</button>
             </div>
             <div class="tab-content active" id="main-content">
-                <input type="text" id="query" placeholder="Enter movie or show title">
-                <button id="search-button">Search</button>
-                <div id="results"></div>
+                        <input type="text" id="query" placeholder="Enter movie or show title">
+                        <button id="search-button">Search</button>
+                        <div id="results"></div>
             </div>
             <div class="tab-content" id="domains-content">
+                        <div id="manual-domain-container">
+                            <input type="text" id="manual-domain-input" placeholder="https://vidsrc-embed.ru">
+                            <button id="manual-domain-save">Set Default Domain</button>
+                            <div id="manual-domain-message"></div>
+                        </div>
                 <div id="domains-list"></div>
                 <div id="default-domain-label"></div>
             </div>

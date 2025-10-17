@@ -1,3 +1,4 @@
+// ...existing code...
 const apiKey = 'caac8478';
 const baseURL = 'https://www.omdbapi.com/';
 function searchIMDb(query, sendResponse) {

@@ -33,6 +33,31 @@
   border-radius: 4px;
   padding: 10px;
 }
+#manual-domain-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+#manual-domain-container input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+#manual-domain-container button {
+  align-self: flex-start;
+  padding: 6px 12px;
+  font-size: 0.9em;
+}
+#manual-domain-message {
+  min-height: 18px;
+  font-size: 0.85em;
+  color: #d13438;
+}
+#manual-domain-message.success {
+  color: #107c10;
+}
 .domain-item {
   display: flex;
   align-items: center;

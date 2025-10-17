@@ -16,6 +16,18 @@
   "background": {
     "service_worker": "src/background.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://vidsrc.in/embed/*",
+        "https://vidsrc.pm/embed/*",
+        "https://vidsrc.xyz/embed/*",
+        "https://vidsrc.net/embed/*"
+      ],
+      "js": ["src/anti-jack.js"],
+      "run_at": "document_start"
+    }
+  ],
   "icons": {
     "16": "vidsrc16.png"
   }
