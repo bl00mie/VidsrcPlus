@@ -14,13 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Restore Next button if it should be visible
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             const currentTab = tabs[0];
-            const base = getDefaultDomain();
-            const urlPattern = new RegExp(`${base.replace('.', '\.')}/embed/tv/(.+)/(\d+)-(\d+)`);
-            if (urlPattern.test(currentTab.url)) {
-                nextButton.style.display = 'block';
-            } else {
-                nextButton.style.display = 'none';
-            }
+            updateNextButtonVisibility(currentTab && currentTab.url);
         });
     });
 
@@ -77,6 +71,46 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem(DOMAIN_DEFAULT_KEY, domain);
     }
 
+    function isLikelyVidsrcHostname(host) {
+        return /(?:vidsrc[a-z0-9-]*|vsrc[a-z0-9-]*)\.[a-z]{2,}$/i.test(host || '');
+    }
+
+    function getOriginFromUrl(urlValue) {
+        if (!urlValue) {
+            return null;
+        }
+        try {
+            return new URL(urlValue).origin;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function parseEmbedTvInfo(urlValue) {
+        if (!urlValue) {
+            return null;
+        }
+        try {
+            const parsed = new URL(urlValue);
+            const match = parsed.pathname.match(/^\/embed\/tv\/([^/]+)\/(\d+)-(\d+)$/i);
+            if (!match) {
+                return null;
+            }
+            return {
+                seriesId: match[1],
+                seasonNumber: parseInt(match[2], 10),
+                episodeNumber: parseInt(match[3], 10),
+                origin: parsed.origin
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function updateNextButtonVisibility(urlValue) {
+        nextButton.style.display = parseEmbedTvInfo(urlValue) ? 'block' : 'none';
+    }
+
     function extractVidsrcDomain(urlValue) {
         if (!urlValue) {
             return null;
@@ -84,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const parsed = new URL(urlValue);
             const host = parsed.hostname.toLowerCase();
-            if (/(?:vidsrc[a-z0-9-]*|vsrc[a-z0-9-]*)\.[a-z]{2,}$/i.test(host)) {
+            if (isLikelyVidsrcHostname(host)) {
                 return `https://${host}`;
             }
         } catch (e) {
@@ -270,6 +304,60 @@ document.addEventListener('DOMContentLoaded', function() {
         return match ? match[0] : getDefaultDomain();
     }
 
+    function tryAdoptActiveTabDomain(tab) {
+        if (!tab || !tab.id || !tab.url) {
+            return;
+        }
+
+        const knownOrigin = getOriginFromUrl(tab.url);
+        if (!knownOrigin) {
+            return;
+        }
+
+        // If hostname already looks like vidsrc/vsrc, adopt immediately.
+        try {
+            const host = new URL(tab.url).hostname.toLowerCase();
+            if (isLikelyVidsrcHostname(host)) {
+                setDefaultDomain(knownOrigin);
+                vidsrcBaseURL = knownOrigin;
+                return;
+            }
+        } catch (e) {
+            // ignore URL parse failures
+        }
+
+        // Otherwise inspect page markers to determine if this is still a valid vidsrc embed page.
+        chrome.scripting.executeScript(
+            {
+                target: { tabId: tab.id },
+                func: () => {
+                    const body = document.body;
+                    const hasPlayerIframe = !!document.getElementById('player_iframe');
+                    const hasBodyData = !!(body && body.dataset && body.dataset.i);
+                    const isEmbedPath = /^\/embed\/(movie|tv)\//i.test(location.pathname);
+                    const text = (document.body && document.body.textContent ? document.body.textContent : '').toLowerCase();
+                    const hasVidsrcText = text.includes('vidsrc');
+                    const score = [hasPlayerIframe, hasBodyData, isEmbedPath, hasVidsrcText].filter(Boolean).length;
+                    return {
+                        isLikelyVidsrcPage: score >= 2,
+                        origin: location.origin
+                    };
+                }
+            },
+            (results) => {
+                if (chrome.runtime.lastError || !results || !results[0] || !results[0].result) {
+                    return;
+                }
+                const info = results[0].result;
+                if (info.isLikelyVidsrcPage && info.origin) {
+                    setDefaultDomain(info.origin);
+                    vidsrcBaseURL = info.origin;
+                    updateManualDomainMessage(`Detected valid Vidsrc page on ${info.origin}. Default domain updated.`, false);
+                }
+            }
+        );
+    }
+
     let vidsrcBaseURL = getDefaultDomain();
     let currentTabUrl = '';
     // Set vidsrcBaseURL from current tab at startup
@@ -277,11 +365,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tabs && tabs[0]) {
             currentTabUrl = tabs[0].url;
             vidsrcBaseURL = getVidsrcBaseURL(currentTabUrl);
-            // Show Next button if on a Vidsrc embed page
-            const urlPattern = new RegExp(`${vidsrcBaseURL.replace('.', '\\.')}/embed/tv/(.+)/(\\d+)-(\\d+)`);
-            if (urlPattern.test(currentTabUrl)) {
-                nextButton.style.display = 'block';
-            }
+            updateNextButtonVisibility(currentTabUrl);
+            tryAdoptActiveTabDomain(tabs[0]);
         }
     });
     const input = document.getElementById('query');
@@ -298,22 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.key === 'Enter') {
             event.preventDefault();
             const query = input.value;
-        // Helper to extract Vidsrc domain from a URL
-        function getVidsrcBaseURL(url) {
-            const match = url.match(/https:\/\/(?:[a-z0-9-]+\.)*(?:vidsrc[a-z0-9-]*|vsrc[a-z0-9-]*)\.[a-z]{2,}/i);
-            return match ? match[0] : null;
-        }
-
-        // Set vidsrcBaseURL from current tab
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            const currentTab = tabs[0];
-            vidsrcBaseURL = getVidsrcBaseURL(currentTab.url) || getDefaultDomain();
-            // Show Next button if on a Vidsrc embed page
-            const urlPattern = new RegExp(`${vidsrcBaseURL.replace('.', '\\.')}/embed/tv/(.+)/(\\d+)-(\\d+)`);
-            if (urlPattern.test(currentTab.url)) {
-                nextButton.style.display = 'block';
-            }
-        });
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                const currentTab = tabs[0];
+                if (currentTab && currentTab.url) {
+                    vidsrcBaseURL = getOriginFromUrl(currentTab.url) || getDefaultDomain();
+                    updateNextButtonVisibility(currentTab.url);
+                }
+            });
             queryIMDbData(query);
         }
     });
@@ -485,14 +561,10 @@ document.addEventListener('DOMContentLoaded', function() {
     nextButton.addEventListener('click', function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             const currentTab = tabs[0];
-            const base = getDefaultDomain();
-            const urlPattern = new RegExp(`${base.replace('.', '\\.')}/embed/tv/(.+)/(\\d+)-(\\d+)`);
-            const match = currentTab.url.match(urlPattern);
-            if (match) {
-                const seriesId = match[1];
-                const seasonNumber = parseInt(match[2]);
-                const episodeNumber = parseInt(match[3]);
-                fetchNextEpisode(seriesId, seasonNumber, episodeNumber, base, currentTab.id);
+            const info = parseEmbedTvInfo(currentTab && currentTab.url);
+            if (info) {
+                const base = info.origin || getDefaultDomain();
+                fetchNextEpisode(info.seriesId, info.seasonNumber, info.episodeNumber, base, currentTab.id);
             }
         });
     });
